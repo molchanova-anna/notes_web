@@ -1,3 +1,6 @@
+'''
+ORM models
+'''
 from sqlalchemy import Column, Integer, String, DateTime, func, ForeignKey, UniqueConstraint
 
 from sqlalchemy.orm import declarative_base, relationship, declarative_mixin
@@ -12,7 +15,7 @@ class IdMixin:
 
 @declarative_mixin
 class DtMixin:
-    dt_created = Column('dt_created', DateTime, nullable=False, server_default=func.now()) # TODO with tz
+    dt_created = Column('dt_created', DateTime, nullable=False, server_default=func.now())
     dt_edited = Column('dt_edited', DateTime) # TODO with tz
 
 

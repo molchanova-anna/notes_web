@@ -1,3 +1,6 @@
+'''
+CRUD and getting data from DB
+'''
 import functools
 
 from sqlalchemy import func
@@ -11,7 +14,7 @@ def async_session_with_commit():
     def wrapper(func):
         @functools.wraps(func)
         async def wrapped(*args, **kwargs):
-            async with async_session() as session: # TODO deco
+            async with async_session() as session:
                 res = await func(session, *args, **kwargs)
                 await session.commit()
                 if res:
@@ -20,11 +23,13 @@ def async_session_with_commit():
         return wrapped
     return wrapper
 
+
 @async_session_with_commit()
 async def db_add_note(session, **kwargs):
     db_note = Note(**kwargs)
     session.add(db_note)
     return db_note
+
 
 @async_session_with_commit()
 async def db_get_note(session, note_id: int):
@@ -32,6 +37,7 @@ async def db_get_note(session, note_id: int):
     db_note.view_count += 1
     session.add(db_note)
     return db_note
+
 
 @async_session_with_commit()
 async def db_edit_note(session, note_id: int, **kwargs):
@@ -42,16 +48,19 @@ async def db_edit_note(session, note_id: int, **kwargs):
     session.add(db_note)
     return db_note
 
+
 @async_session_with_commit()
 async def db_delete_note(session, note_id: int): # TODO if not exists
     db_note = await session.get(Note, note_id)
     await session.delete(db_note)
+
 
 @async_session_with_commit()
 async def db_add_board(session, **kwargs):
     db_board = Board(**kwargs)
     session.add(db_board)
     return db_board
+
 
 @async_session_with_commit()
 async def db_edit_board(session, board_id: int, **kwargs):
@@ -62,15 +71,18 @@ async def db_edit_board(session, board_id: int, **kwargs):
     session.add(db_board)
     return db_board
 
+
 @async_session_with_commit()
 async def db_delete_board(session, board_id: int):
     db_board = await session.get(Board, board_id)
     await session.delete(db_board)
 
+
 @async_session_with_commit()
 async def db_get_board(session, board_id: int):
     db_board = await session.get(Board, board_id)
     return db_board
+
 
 async def db_add_note_to_board(board_id: int, note_id: int):
     async with async_session() as session:
@@ -87,6 +99,7 @@ async def db_add_note_to_board(board_id: int, note_id: int):
             if str(e.orig.pgcode) != str(23505):
                 raise e
     return db_board
+
 
 @async_session_with_commit()
 async def db_delete_note_from_board(session, board_id: int, note_id: int):

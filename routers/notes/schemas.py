@@ -25,7 +25,7 @@ class ResponseAddNoteSchema(NoteSchema):
 class RequestEditNoteSchema(BaseModel):
    text: str = Field(str, title="Text of note")
 
-
+# Edit schema is the same like NoteSchema, but using one class in many places can be confusing
 class ResponseEditNoteSchema(NoteSchema):
    pass
 

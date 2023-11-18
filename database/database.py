@@ -1,48 +1,44 @@
+'''
+Connection to DB
+'''
+
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from database.models import Base
-from settings import Settings
+from config import config as db_config
 import asyncpg, asyncio
 
-settings = Settings()
-
-username = settings.DB_USERNAME
-password = settings.DB_PASSWORD
-dbname = settings.DB_NAME
-db_port = settings.DB_PORT
-db_host = settings.DB_HOST
-db_creator_user = settings.DB_CREATOR_USER
-db_creator_password = settings.DB_CREATOR_PASSWORD
-
-SQLALCHEMY_DATABASE_URL = f"postgresql+asyncpg://{username}:{password}@{db_host}:{db_port}/{dbname}"
+SQLALCHEMY_DATABASE_URL = db_config.sqlalchemy_database_url()
 
 async def create_db():
-    need_create_db = False
     try:
-        conn = await asyncpg.connect(user=username, database=dbname, password=password)
+        conn = await asyncpg.connect(host=db_config.DB_HOST,
+                                     port=db_config.DB_PORT,
+                                     user=db_config.DB_USERNAME,
+                                     database=db_config.DB_NAME,
+                                     password=db_config.DB_PASSWORD)
         await conn.close()
     except asyncpg.InvalidCatalogNameError:
-        need_create_db = True
         # Database does not exist, create it.
         sys_conn = await asyncpg.connect(
             database='template1',
-            user=db_creator_user,
-            password=db_creator_password,
+            user=db_config.DB_CREATOR_USER,
+            password=db_config.DB_CREATOR_PASSWORD,
         )
         await sys_conn.execute(
-            f'CREATE DATABASE "{dbname}" OWNER "{username}"'
+            f'CREATE DATABASE "{db_config.DB_NAME}" OWNER "{db_config.DB_USERNAME}"'
         )
         await sys_conn.close()
 
         # Connect to the newly created database.
         async_engine = create_async_engine(SQLALCHEMY_DATABASE_URL, echo=True)
-        if need_create_db:
-            async with async_engine.begin() as connect:
-                await connect.run_sync(Base.metadata.create_all)
+        async with async_engine.begin() as connect:
+            await connect.run_sync(Base.metadata.create_all)
 
-asyncio.get_event_loop().run_until_complete(
-    create_db()
-)
+if __name__ == '__main__':
+    asyncio.get_event_loop().run_until_complete(
+        create_db()
+    )
 async_engine = create_async_engine(SQLALCHEMY_DATABASE_URL, echo=True)
 async_session = async_sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False, autocommit=False)
